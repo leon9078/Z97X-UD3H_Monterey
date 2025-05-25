@@ -26,8 +26,8 @@ DefinitionBlock ("", "SSDT", 2, "HACK", "XHUB", 0x00000000)
             One, 
             One, 
             One, 
-            Zero, 
-            Zero, 
+            One, 
+            One, 
             One, 
             One, 
             One, 
@@ -39,7 +39,7 @@ DefinitionBlock ("", "SSDT", 2, "HACK", "XHUB", 0x00000000)
         {
             Zero, 
             Zero, 
-            One, 
+            Zero, 
             One, 
             One, 
             One
