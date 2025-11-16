@@ -12,7 +12,7 @@ Complete list of modifications:
 6) Delete 2 Microcode GUID ffs (fake, and last of the duplicates one)
 7) Delete 2 "Padding file" sections, by adjusting Attributes
 8) Replace AMI's "FileSystem" driver with "Fat" (EnhancedFatDxe from FatPkg audk [fork of EDK II project focused on security])
-9) Change CORE_DXE to add "OpenCore bootloader" and "gentoo" for automatic detection of specific bootloader paths
+9) Change CORE_DXE to add "OpenCore bootloader" and "Gentoo" for automatic detection of specific bootloader paths. Plus, slightly change casing of other Linux entries as per https://uefi.org/registry
 
 Prerequisites:
 - Clean install of Windows 10 version 1607 or higher
@@ -1031,7 +1031,7 @@ Open MMTool.exe
 Load Image > "mod_bios_NVRAM_ACPI_Debug.fd" > Open
 Delete > Volume Index: 02:01-00, File Index: 02 > Delete
 Volume Index: 03, File Index: 02 > Delete
-Save Image as... > "mod_bios_tmp" > Save
+Save Image as.. > "mod_bios_tmp" > Save
 Close
 
 Back to CMD
@@ -1120,9 +1120,9 @@ Done with the creation of the Fat ffs module!
 
 
 
-Now we want to add "OpenCore bootloader" and "gentoo" to the list of recognized EFI default bootloaders in our firmware.
-We known that our firmware has "UEFI OS" boot entry during startup for any bootloader installed in the EFI (fallback) removable path (EFI\BOOT\BOOTx64.efi).
-We also have "Windows Boot Manager" boot entry when we are booting a Windows operating system just like any other PC.
+Now we want to add "OpenCore bootloader" and "Gentoo" to the list of recognized EFI default bootloaders in our firmware. Plus, we want to slightly modify casing of other Linux entries as per https://uefi.org/registry
+We known that our firmware has "UEFI OS" boot entry during startup for any bootloader installed in the EFI (fallback) removable path (\EFI\BOOT\BOOTx64.efi).
+We also have "Windows Boot Manager" boot entry pointing to \EFI\Microsoft\Boot\bootmgfw.efi when we are booting a Windows operating system just like any other PC.
 
 
 Let's try to search for "UEFI OS" string in our BIOS
@@ -1221,7 +1221,7 @@ Suse Boot Manager \EFI\Suse\elilo.efi
 
 Now, we can clearly see a pattern:
 - on the left there is the boot entry string (ie. "UEFI OS")
-- on the right there is the EFI bootloader path (ie. \EFI\BOOT\BOOTX64.EFI)
+- on the right there is the EFI bootloader path (ie. "\EFI\BOOT\BOOTX64.EFI")
 
 Furthermore, if we go back to Hextor, we can see that each side (the boot entry string on the left, and the bootloader path on the right) has multiple NULL characters before the next entry appear
 
@@ -1259,76 +1259,89 @@ For a clearer overall view of the process we want to put quotes on both side plu
 
 
 
-We want to modify "RedHat Boot Manager" and "ubuntu" entries.
+We want to modify "RedHat Boot Manager" and "ubuntu" entries and change them to "OpenCore bootloader" and "Gentoo" respectively. Plus, we want to slightly modify casing of other Linux entries as per https://uefi.org/registry
 
 From this:
 
+"opensuse"              {8+4} (12) ->  "\EFI\opensuse\grubx64.efi"  {25+3} (28)
 "RedHat Boot Manager"  {19+1} (20) ->  "\EFI\Redhat\elilo.efi"      {21+3} (24)
 "ubuntu"                {6+2}  (8) ->  "\EFI\Ubuntu\grubx64.efi"    {23+1} (24)
 
 to this:
 
+"openSUSE"              {8+4} (12) ->  "\EFI\openSUSE\grubx64.efi"  {25+3} (28)
 "OpenCore bootloader"  {19+1} (20) ->  "\EFI\OC\OpenCore.efi"       {20+4} (24)
-"gentoo"                {6+2}  (8) ->  "\EFI\gentoo\grubx64.efi"    {23+1} (24)
+"Gentoo"                {6+2}  (8) ->  "\EFI\Gentoo\bzImage.efi"    {23+1} (24)
 
+Here I'm defining bzImage.efi instead of the traditional grubx64.efi. This is because I want to use EFI stub instead of the traditional GRUB 2 bootloader when using Gentoo!
 
-Now, sum the number of characters to Find/Replace: 20 + 24 + 8 + 24 = 76
-We need to replace 76 UCS-2 bytes (152 bytes)
+Now, sum the number of characters to Find/Replace: 12 + 28 + 20 + 24 + 8 + 24 = 116
+We need to replace 116 UCS-2 bytes (232 bytes)
 
 Now we have to create our Hextor find sequence:
 
-The initial find sequence begins with "RedHat Boot Manager". Next we need to add "\x00" to the end.
+The initial find sequence begins with "opensuse". Next we need to add x4 "\x00" to the end!
 This will also be useful later because we want to add a fixed number of "\x00" at the end of each string as we noted above.
-Our find sequence is now: "RedHat Boot Manager{u16:0x00}"
-Now we have to add the remaining number of UCS-2 bytes to sequence until we reach number 76
-"RedHat Boot Manager" is 19 characters.
-"\x00" is 1 character.
-Remaining bytes will be: 76 - (19 + 1) = 56
+Our find sequence is now: "opensuse{u16:0x00:4}"
+Now we have to add the remaining number of UCS-2 bytes to sequence until we reach number 116
+"opensuse" is 8 characters.
+"\x00" is 4 characters.
+Remaining bytes will be: 116 - (8 + 4) = 104
 
-Our new sequence will be: "RedHat Boot Manager{u16:0x00}{u16::56}"
+Our new sequence will be: "opensuse{u16:0x00:4}{u16::104}"
 
 
 
 Now let's move to the Replace sequence
 
-We have "OpenCore bootloader" with one extra NUL character.
-This time, in the replace sequence we can not add "{u16:0x00}" as it will be recognized as an string to replace.
+We are basically just changing the case from "opensuse" to "openSUSE". Nothing special to cover here.
+Next, we have "OpenCore bootloader" with one extra NUL character.
+This time, in the replace sequence we can not add "{u16:0x00}" as it will be recognized as a string to replace.
 
 One way is using this notation: "\x00", but later when we have to deal with multiple NUL characters we would type: "\x00\x00\x00\x00"
 
 Another more efficient way is to use a feature in Hextor called "Indexed subexpressions".
-Basically, find sequence becomes: "RedHat Boot Manager({u16:0x00}){u16::56}"
-while replace sequence now becomes: "OpenCore bootloader$1"
+Basically, find sequence becomes: "opensuse({u16:0x00:4}){u16::104}"
+
+But if we do this way, our value inside round brackets would be \x00\x00\x00\x00, basically x4 \x00 value. This will be a problem if our replace value will need less than 4 NUL characters after each string...
+So we want to change this by only selecting 1 NUL character inside the round bracket and then add 3 more bytes to the curly brackets.
+So the FINAL find sequence will be: "opensuse({u16:0x00}){u16::107}"
+
+while replace sequence now becomes: "openSUSE$1$1$1$1"
 
 "$1" in this case means: "{u16:0x00}"
 
 Now that we understand this pattern, it's easy to continue till the end of the Replace sequence:
 
-OpenCore bootloader      -> 19
-$1                       ->  1 (\x00)
-\EFI\OC\OpenCore.efi     -> 20
-$1$1$1$1                 ->  4 (\x00 * 4)
-gentoo                   ->  6
-$1$1                     ->  2 (\x00 * 2)
-\EFI\gentoo\grubx64.efi  -> 23
-$1                       ->  1 (\x00)
+openSUSE                   ->  8
+$1$1$1$1                   ->  4 (\x00 * 4)
+\EFI\openSUSE\grubx64.efi  -> 25
+$1$1$1                     ->  3 (\x00 * 3)
+OpenCore bootloader        -> 19
+$1                         ->  1 (\x00)
+\EFI\OC\OpenCore.efi       -> 20
+$1$1$1$1                   ->  4 (\x00 * 4)
+Gentoo                     ->  6
+$1$1                       ->  2 (\x00 * 2)
+\EFI\Gentoo\bzImage.efi    -> 23
+$1                         ->  1 (\x00)
 
-TOTAL                    -> 76
+TOTAL                      -> 116
 
 Now one last caveat, we need to escape backlash (\) character(s), otherwise those gets removed by Hextor.
 
-Final sequence now is: "OpenCore bootloader$1\\EFI\\OC\\OpenCore.efi$1$1$1$1gentoo$1$1\\EFI\\gentoo\\grubx64.efi$1"
+FINAL replace sequence now is: "openSUSE$1$1$1$1\\EFI\\openSUSE\\grubx64.efi$1$1$1OpenCore bootloader$1\\EFI\\OC\\OpenCore.efi$1$1$1$1Gentoo$1$1\\EFI\\Gentoo\\bzImage.efi$1"
 
 Back to Hextor
 Search > Find/Replace...
-Find: "RedHat Boot Manager({u16:0x00}){u16::56}"
+Find: "opensuse({u16:0x00}){u16::107}"
 Text: "1200 (Unicode)"
 check "Extended syntax"
 Find next >>
 
 Expand "Replace" section
-Replace with: "OpenCore bootloader$1\\EFI\\OC\\OpenCore.efi$1$1$1$1gentoo$1$1\\EFI\\gentoo\\grubx64.efi$1"
-uncheck both "Hex" and "ask each replace"
+Replace with: "openSUSE$1$1$1$1\\EFI\\openSUSE\\grubx64.efi$1$1$1OpenCore bootloader$1\\EFI\\OC\\OpenCore.efi$1$1$1$1Gentoo$1$1\\EFI\\Gentoo\\bzImage.efi$1"
+uncheck both "Hex" and "Ask each replace"
 Replace all > [Search pattern replaced 1 time(s)] > OK
 
 Close Find/Replace window
@@ -1360,11 +1373,11 @@ File > Save image file... > "tmp.fd" > Save
 
 Open reconstructed file > No
 
-A warning will appear saying: "parseFile: invalid data checksum 96h, should be C5h". It is recreating the checksum for us!!!
+A warning will appear saying: "parseFile: invalid data checksum 96h, should be D8h". It is recreating the checksum for us!!!
 
 Source of this message here: https://github.com/LongSoft/UEFITool/blob/0.28.0/ffsengine.cpp#L1346C17-L1346C68
 
-Take note of the new checksum value: "C5h"
+Take note of the new checksum value: "D8h"
 
 
 File > Quit
@@ -1376,7 +1389,7 @@ File > Quit
 Back to File Explorer, drag "CORE_DXE_mod.ffs" into Hextor icon while holding Shift
 
 Search > Go To address... > 0x11 > OK
-Type: "C5"
+Type: "D8"
 File > Save
 File > Exit
 
