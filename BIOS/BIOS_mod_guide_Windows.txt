@@ -1174,7 +1174,7 @@ Now, put the cursor to the Text pane, and select "UEFI OS" up to the end of "Win
 Do not care about those dots, between the ASCII letters. This are part of the Unicode encoding, they are "\x00" bytes, and we will get rid of them shortly.
 We do this in order to have a better reading of the text itself.
 
-You have selected a total of 488 (+8) 496 bytes.
+You have selected a total of 496 bytes.
 
 Edit > Copy as > Array (delimited text)
 Elements: unicode
