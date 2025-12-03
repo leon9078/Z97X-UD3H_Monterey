@@ -104,7 +104,7 @@ y
 % perl -i -pe 's/(timeout).*/$1 5/;s/(beep).*/$1 off/' /Volumes/ARCH_202512/loader/loader.conf
 % mv /Volumes/ARCH_202512/EFI/BOOT/{,ARCH-}BOOTx64.EFI
 % mv /Volumes/ARCH_202512/shellx64.efi /Volumes/ARCH_202512/EFI/BOOT/BOOTx64.EFI
-% curl -LJ -o /Volumes/ARCH_202512/EFI/BOOT/BIOS_settings.nsh https://github.com/leon9078/Z97X-SLI_Monterey/raw/master/BIOS/BIOS_settings.nsh
+% curl -LJ -o /Volumes/ARCH_202512/EFI/BOOT/BIOS_settings.nsh https://github.com/leon9078/Z97X-UD3H_Monterey/raw/master/BIOS/BIOS_settings.nsh
 % curl -LJ -o /Volumes/ARCH_202512/EFI/TOOLS/uvt.efi --create-dirs https://github.com/leon9078/UefiVarTool/releases/download/1.0.0/uvt.efi
 % printf '@echo -off\r\nARCH-BOOTx64.EFI\r\n' | perl -0777pe 's/(.)/$1\x00/gs;s/^/\xFF\xFE/' > /Volumes/ARCH_202512/EFI/BOOT/startup.nsh
 % sudo sync
@@ -164,7 +164,7 @@ Start with the backup BIOS (B_BIOS):
 # echo && sha256sum FF_8MiB.bin B_BIOS_read_after_erase.bin && echo
 # flashrom --chip 'MX25L6473E' --programmer ch341a_spi --noverify --write Z97XUD3H.fd
 # flashrom --chip 'MX25L6473E' --programmer ch341a_spi --read B_BIOS_read_after_reprogram.bin
-# echo && sha256sum Z97XSLI.fd B_BIOS_read_after_reprogram.bin && echo
+# echo && sha256sum Z97XUD3H.fd B_BIOS_read_after_reprogram.bin && echo
 
 Now, move on to the main BIOS (M_BIOS):
 
@@ -173,7 +173,7 @@ Now, move on to the main BIOS (M_BIOS):
 # echo && sha256sum FF_8MiB.bin M_BIOS_read_after_erase.bin && echo
 # flashrom --chip 'MX25L6473E' --programmer ch341a_spi --noverify --write Z97XUD3H.fd
 # flashrom --chip 'MX25L6473E' --programmer ch341a_spi --read M_BIOS_read_after_reprogram.bin
-# echo && sha256sum Z97XSLI.fd M_BIOS_read_after_reprogram.bin && echo
+# echo && sha256sum Z97XUD3H.fd M_BIOS_read_after_reprogram.bin && echo
 
 Unplug power cable again.
 Short CLR_CMOS pins.
